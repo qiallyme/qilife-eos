@@ -1,0 +1,2233 @@
+CODE EXTRACTION REPORT
+Generated: 2025-08-26 01:47:40
+Root Directory: D:\qilife-eos
+Ignored Directories: dist, node_modules
+Ignored Files: package-lock.json
+================================================================================
+
+DIRECTORY TREE STRUCTURE:
+----------------------------------------
+├── cockpit
+│   ├── cockpit.py
+│   ├── config.example.json
+│   ├── README.md
+│   └── requirements.txt
+├── miniapps
+│   ├── qi_rag_private
+│   │   ├── app
+│   │   │   ├── llm.py
+│   │   │   ├── main.py
+│   │   │   ├── rag.py
+│   │   │   └── utils.py
+│   │   ├── scripts
+│   │   │   ├── ingest.py
+│   │   │   ├── rclone_template.sh
+│   │   │   └── watch_folder.py
+│   │   ├── app.py
+│   │   ├── config.json
+│   │   ├── docker-compose.yml
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   ├── requirements.txt
+│   │   ├── run.ps1
+│   │   └── run.sh
+│   └── qivect-dropbox
+│       ├── app.py
+│       ├── config.json
+│       ├── README.md
+│       ├── requirements.txt
+│       ├── run.ps1
+│       └── run.sh
+├── scripts
+│   ├── bootstrap_venvs.ps1
+│   └── bootstrap_venvs.sh
+├── shared
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   └── process_utils.cpython-311.pyc
+│   ├── __init__.py
+│   ├── config_schema.py
+│   ├── logging_utils.py
+│   └── process_utils.py
+├── code_extraction_2025-08-26_01-47-40.txt
+├── code_extractor.py
+├── directory_mapper.py
+├── LICENSE
+├── miniapps.json
+└── README.md
+
+================================================================================
+STARTING FILE CONTENT EXTRACTION
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\code_extraction_2025-08-26_01-47-40.txt
+TYPE: .txt
+================================================================================
+
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\code_extraction_2025-08-26_01-47-40.txt
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\code_extractor.py
+TYPE: .py
+================================================================================
+
+import os
+from datetime import datetime
+
+def should_ignore_directory(dir_name):
+    """Check if directory should be ignored."""
+    ignore_dirs = ['dist', 'node_modules']
+    return dir_name.lower() in [d.lower() for d in ignore_dirs]
+
+def get_file_extension(file_name):
+    """Get file extension for determining if it's a code file."""
+    return os.path.splitext(file_name)[1].lower()
+
+def is_code_file(file_name):
+    """Check if file is likely a code file based on extension."""
+    # Files to explicitly ignore
+    ignore_files = ['package-lock.json']
+    if file_name in ignore_files:
+        return False
+    
+    code_extensions = {
+        '.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.scss', '.sass',
+        '.json', '.xml', '.yaml', '.yml', '.md', '.txt', '.sh', '.bat', '.ps1',
+        '.vue', '.php', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.rb',
+        '.go', '.rs', '.swift', '.kt', '.scala', '.r', '.sql', '.pl', '.lua',
+        '.config.js'  # Include config.js files
+    }
+    
+    # Check for exact extension match
+    if get_file_extension(file_name) in code_extensions:
+        return True
+    
+    # Special check for .config.js files
+    if file_name.endswith('.config.js'):
+        return True
+    
+    return False
+
+def print_directory_tree(root_dir, output_file, current_depth=0, prefix=''):
+    """Recursively prints the directory tree structure and writes to output file."""
+    
+    try:
+        # Get the list of items in the directory
+        items = os.listdir(root_dir)
+    except PermissionError:
+        message = prefix + "└── [Permission Denied]"
+        print(message)
+        output_file.write(message + "\n")
+        return
+    except FileNotFoundError:
+        message = prefix + "└── [Directory Not Found]"
+        print(message)
+        output_file.write(message + "\n")
+        return
+
+    # Sort items: directories first, then files
+    items = sorted(items, key=lambda s: s.lower())
+    directories = [item for item in items if os.path.isdir(os.path.join(root_dir, item))]
+    files = [item for item in items if not os.path.isdir(os.path.join(root_dir, item))]
+
+    # Filter out ignored directories and hidden files/directories
+    directories = [item for item in directories if not should_ignore_directory(item) and not item.startswith('.')]
+    files = [item for item in files if not item.startswith('.')]
+
+    # Combine directories and files
+    items = directories + files
+
+    for index, item in enumerate(items):
+        path = os.path.join(root_dir, item)
+        
+        # Determine tree connector style
+        if index == len(items) - 1:
+            connector = '└── '
+            extension = '    '
+        else:
+            connector = '├── '
+            extension = '│   '
+
+        # Print and write to file
+        message = prefix + connector + item
+        print(message)
+        output_file.write(message + "\n")
+
+        # Recurse into directories (excluding ignored ones)
+        if os.path.isdir(path):
+            print_directory_tree(path, output_file, current_depth + 1, prefix + extension)
+
+def extract_file_content(file_path, output_file):
+    """Extract and write file content with header."""
+    try:
+        # Create header
+        header = f"\n{'='*80}\n"
+        header += f"FILE: {file_path}\n"
+        header += f"TYPE: {get_file_extension(file_path)}\n"
+        header += f"{'='*80}\n\n"
+        
+        print(header)
+        output_file.write(header)
+        
+        # Read and write file content
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+            print(content)
+            output_file.write(content)
+            
+        # Add footer
+        footer = f"\n\n{'='*80}\nEND OF FILE: {file_path}\n{'='*80}\n\n"
+        print(footer)
+        output_file.write(footer)
+        
+    except Exception as e:
+        error_msg = f"\nERROR READING FILE {file_path}: {str(e)}\n"
+        print(error_msg)
+        output_file.write(error_msg)
+
+def scan_and_extract_files(root_dir, output_file):
+    """Scan directory tree and extract content from all code files."""
+    print(f"\n{'='*80}")
+    print("STARTING FILE CONTENT EXTRACTION")
+    print(f"{'='*80}\n")
+    output_file.write(f"\n{'='*80}\n")
+    output_file.write("STARTING FILE CONTENT EXTRACTION\n")
+    output_file.write(f"{'='*80}\n\n")
+    
+    file_count = 0
+    
+    for root, dirs, files in os.walk(root_dir):
+        # Filter out ignored directories from traversal
+        dirs[:] = [d for d in dirs if not should_ignore_directory(d) and not d.startswith('.')]
+        
+        # Filter out hidden files and sort for consistent order
+        files = [f for f in files if not f.startswith('.')]
+        files = sorted(files, key=lambda s: s.lower())
+        
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            
+            # Only process code files
+            if is_code_file(file_name):
+                extract_file_content(file_path, output_file)
+                file_count += 1
+    
+    return file_count
+
+def main():
+    """Main function to run the code extraction."""
+    # Get the project root (current working directory)
+    root_dir = os.getcwd()
+    
+    # Create output file in root directory
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    output_filename = f"code_extraction_{timestamp}.txt"
+    output_path = os.path.join(root_dir, output_filename)
+    
+    print(f"Starting code extraction from: {root_dir}")
+    print(f"Output will be saved to: {output_path}")
+    print(f"Ignoring directories: dist, node_modules")
+    print(f"Ignoring files: package-lock.json")
+    print(f"{'='*80}\n")
+    
+    with open(output_path, 'w', encoding='utf-8') as output_file:
+        # Write header information
+        header_info = f"CODE EXTRACTION REPORT\n"
+        header_info += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        header_info += f"Root Directory: {root_dir}\n"
+        header_info += f"Ignored Directories: dist, node_modules\n"
+        header_info += f"Ignored Files: package-lock.json\n"
+        header_info += f"{'='*80}\n\n"
+        
+        print(header_info)
+        output_file.write(header_info)
+        
+        # Print directory tree
+        print("DIRECTORY TREE STRUCTURE:")
+        print("-" * 40)
+        output_file.write("DIRECTORY TREE STRUCTURE:\n")
+        output_file.write("-" * 40 + "\n")
+        
+        print_directory_tree(root_dir, output_file)
+        
+        # Extract file contents
+        file_count = scan_and_extract_files(root_dir, output_file)
+        
+        # Write footer
+        footer = f"\n{'='*80}\n"
+        footer += f"EXTRACTION COMPLETE\n"
+        footer += f"Total files processed: {file_count}\n"
+        footer += f"Output saved to: {output_path}\n"
+        footer += f"{'='*80}\n"
+        
+        print(footer)
+        output_file.write(footer)
+    
+    print(f"\nCode extraction completed successfully!")
+    print(f"Output saved to: {output_path}")
+
+if __name__ == "__main__":
+    main()
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\code_extractor.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\directory_mapper.py
+TYPE: .py
+================================================================================
+
+import os
+import argparse
+from datetime import datetime
+
+def print_directory_tree(root_dir, show_files=True, max_depth=None, current_depth=0, prefix='', log_file=None, include_hidden=True, exclude_dirs=None):
+    """
+    Recursively prints the directory tree structure up to the specified depth and writes to a log file.
+    """
+    if exclude_dirs is None:
+        exclude_dirs = [
+            'venv', '__pycache__', 'data', 'logs',
+            '.git', '.vscode', '.idea', '.pytest_cache',
+            '.venv', '.DS_Store', '.env', '.env.local',
+            '.env.development.local', '.env.test.local',
+            '.env.production.local', 'Empty_Folders',
+            '.docusaurus', '.docusaurus-plugin-content-docs-current',
+            # Node / frontend bloat
+            'node_modules', '.node_modules',
+            # Tools/programs we don't want
+            'mpc-hc', 'losslesscut', 'OCR', 'pdf-main', 'my-pdf-main',
+            # Tests (ignore any folder containing these patterns)
+            'test', 'tests', '__tests__',
+            # Plugins and cache
+            'plugins', '.local'
+        ]
+
+    if max_depth is not None and current_depth >= max_depth:
+        return
+
+    try:
+        # Get the list of items in the directory
+        items = os.listdir(root_dir)
+    except PermissionError:
+        message = prefix + "└── [Permission Denied]"
+        print(message)
+        if log_file:
+            log_file.write(message + "\n")
+        return
+    except FileNotFoundError:
+        message = prefix + "└── [Directory Not Found]"
+        print(message)
+        if log_file:
+            log_file.write(message + "\n")
+        return
+
+    # Sort items: directories first, then files
+    items = sorted(items, key=lambda s: s.lower())
+    directories = [item for item in items if os.path.isdir(os.path.join(root_dir, item))]
+    files = [item for item in items if not os.path.isdir(os.path.join(root_dir, item))]
+
+    # Exclude directories that match or contain any exclude pattern
+    directories = [
+        item for item in directories
+        if not any(ex.lower() in item.lower() for ex in exclude_dirs)
+    ]
+
+    # Show files or just folders
+    items = directories if not show_files else directories + files
+
+    for index, item in enumerate(items):
+        if not include_hidden and item.startswith('.'):
+            continue
+
+        path = os.path.join(root_dir, item)
+        # Determine tree connector style
+        if index == len(items) - 1:
+            connector = '└── '
+            extension = '    '
+        else:
+            connector = '├── '
+            extension = '│   '
+
+        # Print and log
+        message = prefix + connector + item
+        print(message)
+        if log_file:
+            log_file.write(message + "\n")
+
+        # Recurse into directories
+        if os.path.isdir(path):
+            print_directory_tree(path, show_files, max_depth, current_depth + 1,
+                                 prefix + extension, log_file, include_hidden, exclude_dirs)
+
+def create_log_file(filename_prefix, suffix=""):
+    """Creates a timestamped log file in Downloads."""
+    downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    sanitized_prefix = "".join(c for c in filename_prefix if c.isalnum() or c in (' ', '_', '-')).strip()
+    if not sanitized_prefix:
+        sanitized_prefix = "log"
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    base_log_file_name = f"{sanitized_prefix}_{timestamp}{suffix}"
+    log_file_name = f"{base_log_file_name}.txt"
+    log_file_path = os.path.join(downloads_dir, log_file_name)
+
+    counter = 1
+    while os.path.exists(log_file_path):
+        log_file_name = f"{base_log_file_name}_{counter}.txt"
+        log_file_path = os.path.join(downloads_dir, log_file_name)
+        counter += 1
+
+    return open(log_file_path, "w", encoding="utf-8")
+
+def main():
+    """Main orchestrator for generating directory tree."""
+    try:
+        # Set default path to project root (current working directory)
+        root_dir = os.getcwd()
+        
+        # Default settings: show both files and folders, no depth limit
+        show_files = True
+        max_depth = None
+
+        log_file_tree = create_log_file(os.path.basename(root_dir), "_tree")
+        print(f"Log file created: {log_file_tree.name}")
+        print(f"Resolved path: {root_dir}")
+        log_file_tree.write(f"Resolved path: {root_dir}\n")
+
+        print_directory_tree(root_dir, show_files, max_depth, log_file=log_file_tree)
+        log_file_tree.close()
+        print(f"Directory structure logged in: {log_file_tree.name}")
+
+    except Exception as e:
+        print(f"An unexpected error occurred in main: {e}")
+
+if __name__ == "__main__":
+    main()
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\directory_mapper.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps.json
+TYPE: .json
+================================================================================
+
+[
+  {
+    "name": "qivect-dropbox",
+    "path": "miniapps/qivect-dropbox",
+    "description": "Example miniapp that demonstrates a simple dropbox integration",
+    "entry": "app.py"
+  },
+  {
+    "name": "qi_rag_private",
+    "path": "miniapps/qi_rag_private",
+    "description": "A stub miniapp representing a private RAG service",
+    "entry": "app.py"
+  }
+]
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps.json
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\README.md
+TYPE: .md
+================================================================================
+
+README.md
+# QiLife-Eos
+
+**The dawn of the QiLife ecosystem.**  
+QiLife-Eos is the root superproject: standards, modules, and scaffolds that power QiSuite, QiVault, QiPortals, and beyond.
+
+> **License snapshot**
+> - ✅ Personal learning & non-commercial public use allowed **with attribution**.
+> - 🚫 Commercial use of any part/idea requires **attribution + paid license**.
+> - See: [`LICENSE.qilife-eos`](./LICENSE.qilife-eos).
+
+---
+
+## Why Eos?
+**Eos** = the first light. This repo holds the patterns, contracts, and templates that everything else orbits.
+
+## What’s inside (starter layout)
+
+
+/docs/ # Design notes, architecture, ADRs
+/packages/ # Libraries, UI kits, SDKs (monorepo-friendly)
+/services/ # Backends, workers, APIs
+/apps/ # User-facing apps (web, desktop, mobile)
+/tooling/ # CLIs, dev scripts, codegen
+/templates/ # Project scaffolds, ISSUE/PR templates
+
+You can start minimal (one app, one service) and grow into a monorepo.
+
+---
+# Getting Started
+## 1) Clone
+git clone https://github.com/<your-org>/QiLife-Eos.git
+cd QiLife-Eos
+---
+## 2) Optional: 
+set up workspace (pnpm recommended for monorepos)
+corepack enable
+pnpm install
+---
+## 3) Run whatever starter app you seed into /apps
+
+pnpm -C apps/portal dev
+
+Standards (tl;dr)
+
+Language: JS/TS + Python, typed where possible.
+
+Packages: pnpm workspaces for Node; uv/pipx for Python tools.
+
+Style: Prettier + ESLint; Black + Ruff (Python).
+
+Commits: Conventional Commits (feat:, fix:, etc.)
+
+Docs: Markdown first; ADRs in /docs/adr.
+---
+# Attribution
+
+If you use any portion publicly (even non-commercial), add this to your README or site footer:
+
+Built with QiLife-Eos • © QiAlly (Cody Rice-Velasquez) • https://qially.me
+
+For commercial licenses and attributions, see Commercial Use below.
+
+# Commercial Use
+
+Commercial usage (any activity intended for, related to, or resulting in revenue, including internal business use) requires:
+
+Attribution, and
+
+A paid commercial license from QiAlly.
+
+→ Contact: licensing@qially.me
+ (subject: QiLife-Eos Commercial License)
+
+Until a paid license is in place, commercial use is not permitted.
+---
+# Contributing
+
+We welcome issues and non-commercial contributions that respect this project’s license. Opening a PR implies you license your contribution to the project under the QiLife-Eos License (see LICENSE.qilife-eos).
+---
+# Security
+
+Report vulnerabilities privately: security@qially.me
+. We’ll acknowledge responsibly.
+---
+# License
+
+Personal learning & non-commercial public use allowed with attribution.
+Commercial use requires attribution and payment.
+Full terms: LICENSE.qilife-eos
+
+© QiAlly / Cody Rice-Velasquez. All rights reserved where not expressly granted.
+
+---
+
+# `.gitignore` 
+### (monorepo-friendly: Node + Python + common build artifacts)
+
+```gitignore
+# Node
+node_modules/
+pnpm-lock.yaml
+npm-debug.log*
+yarn.lock
+*.tsbuildinfo
+
+# Builds / dist
+dist/
+build/
+.cache/
+.next/
+out/
+coverage/
+*.log
+*.tmp
+*.DS_Store
+
+# Vite / bundlers
+.vite/
+.esbuild/
+.parcel-cache/
+
+# Monorepo workspaces
+packages/*/node_modules/
+apps/*/node_modules/
+services/*/node_modules/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.python-version
+.mypy_cache/
+.pytest_cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+# Misc
+*.orig
+*.bak
+```
+---
+# LICENSE.qilife-eos
+## QiLife-Eos License v1.0
+**© QiAlly / Cody Rice-Velasquez (“Licensor”)**
+
+# 1. Definitions
+1.1 “Work” means the QiLife-Eos repository and all files included herein, including designs, code, templates, documentation, and ideas expressed in such materials.
+1.2 “You” means any individual or legal entity exercising permissions granted by this License.
+1.3 “Non-Commercial Use” means personal learning, research, experimentation, portfolio demos, and public sharing where no direct or indirect commercial advantage is intended or realized by You or a third party.
+1.4 “Commercial Use” means any use intended for, related to, or resulting in revenue, monetization, productivity, or business advantage, whether internal or external, including without limitation: deploying in a business, consulting deliverables, SaaS, client projects, paid prototypes, fundraising demos, or training models for commercial products.
+1.5 “Attribution” means a visible credit: “Built with QiLife-Eos • © QiAlly (Cody Rice-Velasquez) • https://qially.me” in user-facing documentation (e.g., README, about page, site footer) and in source headers where practical.
+
+# 2. Grant
+2.1 Non-Commercial License. Subject to the terms herein, Licensor grants You a worldwide, royalty-free, non-exclusive, non-transferable license to (a) use, view, reproduce, and modify the Work; and (b) publicly perform and display derivative works, strictly for Non-Commercial Use, provided that Attribution is preserved and this License is included with the Work and substantial portions thereof.
+2.2 No Commercial Rights. Commercial Use is NOT granted under Section 2.1. Any Commercial Use requires a separate paid commercial license from Licensor prior to such use.
+2.3 Patents. No patent rights are granted under this License. Any patent license must be explicitly agreed in a separate commercial agreement.
+
+# 3. Attribution & Notices
+3.1 You must retain all copyright notices, this License, and any NOTICE files.
+3.2 For public Non-Commercial Use, You must provide Attribution in reasonable proximity to the Work (e.g., README, site footer).
+
+# 4. Commercial Licensing
+4.1 To obtain commercial rights, contact: licensing@qially.me with subject “QiLife-Eos Commercial License.”
+4.2 Until a commercial license is executed and any required fees are paid in full, You have no right to any Commercial Use of the Work.
+
+# 5. Restrictions
+5.1 You may not remove or alter Attribution or this License in copies or substantial portions of the Work.
+5.2 You may not sublicense the Work, in whole or part, except as necessary to host or build non-commercial forks with this License intact.
+5.3 You may not use any trademarks, names, or logos of Licensor (including “QiAlly”, “QiLife”, “QiLife-Eos”) except for Attribution as defined herein or as permitted by separate written permission.
+
+# 6. Contributions
+6.1 By submitting any contribution (code, design, docs), You irrevocably license it to Licensor under this same License.
+6.2 You represent that You have the right to grant such license and that Your contribution does not knowingly infringe third-party rights.
+
+# 7. Warranty Disclaimer
+THE WORK IS PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. YOU ASSUME ALL RISKS.
+
+# 8. Limitation of Liability
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE WORK OR THIS LICENSE.
+
+# 9. Termination
+9.1 This License terminates automatically if You breach any term.
+9.2 Upon termination, You must cease use and distribution of the Work and destroy copies in Your possession, except where retention is required by law.
+9.3 Rights properly granted under an executed commercial license survive in accordance with that agreement.
+
+# 10. Governing Law & Venue
+This License is governed by the laws of the State of Indiana, USA, without regard to conflict-of-law rules. Exclusive venue for disputes shall be the state or federal courts located in Indiana, USA, and You consent to such jurisdiction and venue.
+
+# 11. Severability
+If any provision is held unenforceable, the remaining provisions shall remain in full force and effect.
+
+# 12. Entire Agreement
+This License constitutes the entire agreement between the parties regarding the Work’s Non-Commercial Use and supersedes all prior understandings. Commercial rights are only available by separate written license executed by Licensor.
+
+— End of License —
+
+# (Optional) NOTICE
+## QiLife-Eos
+***© QiAlly / Cody Rice-Velasquez • https://qially.me***
+
+This project includes original designs, code, and documentation.
+Non-Commercial Use is permitted with attribution under LICENSE.qilife-eos.
+Commercial use requires a paid license from the Licensor.
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\README.md
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\cockpit\cockpit.py
+TYPE: .py
+================================================================================
+
+#!/usr/bin/env python3
+"""Qi miniapps cockpit.
+
+This command‑line tool discovers miniapps listed in the repository's
+`miniapps.json` manifest and allows you to list them, run one of them as a
+subprocess and stream its output. It is intentionally simple so that you can
+extend it with additional capabilities (for example, a web UI, health
+checks or termination commands) as your ecosystem grows.
+
+Usage::
+
+    python cockpit.py list
+    python cockpit.py run <miniapp-name>
+
+If a miniapp is run it is executed in its own working directory with the
+current Python interpreter. The cockpit will forward all output lines to
+standard output. Use Ctrl‑C to terminate the running miniapp.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import threading
+
+from pathlib import Path
+
+# Insert the repository root into sys.path so we can import from the `shared` package
+repo_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(repo_root))
+
+from shared.process_utils import start_subprocess, stream_process_output
+
+
+def load_manifest(manifest_path: Path) -> list[dict[str, str]]:
+    """Load the miniapps manifest from a JSON file.
+
+    The manifest is expected to be a list of objects with ``name``, ``path``
+    and ``description`` keys. Additional keys (such as ``entry``) are
+    permitted but ignored by the cockpit.
+
+    Parameters
+    ----------
+    manifest_path: Path
+        Path to the ``miniapps.json`` file.
+
+    Returns
+    -------
+    list
+        List of manifest entries.
+    """
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+        if not isinstance(manifest, list):
+            raise ValueError("Manifest root must be a list")
+        return manifest
+    except Exception as exc:
+        print(f"Error loading manifest: {exc}", file=sys.stderr)
+        return []
+
+
+def find_miniapp(manifest: list[dict[str, str]], name: str) -> dict[str, str] | None:
+    """Return the manifest entry for a miniapp by name, or None if not found."""
+    for entry in manifest:
+        if entry.get("name") == name:
+            return entry
+    return None
+
+
+def list_apps(manifest: list[dict[str, str]]) -> None:
+    """Print all miniapps defined in the manifest."""
+    if not manifest:
+        print("No miniapps defined.")
+        return
+    print("Available miniapps:")
+    for entry in manifest:
+        name = entry.get("name", "<unknown>")
+        desc = entry.get("description", "")
+        print(f"  - {name}: {desc}")
+
+
+def run_app(entry: dict[str, str]) -> None:
+    """Run the given miniapp entry as a subprocess and stream its output."""
+    rel_path = entry.get("path")
+    if not rel_path:
+        print("Manifest entry missing path", file=sys.stderr)
+        return
+    # Determine working directory and entry script
+    repo_root = Path(__file__).resolve().parent.parent
+    app_dir = repo_root / rel_path
+    entry_script = entry.get("entry", "app.py")
+    if not (app_dir / entry_script).exists():
+        print(f"Entry script '{entry_script}' not found in {app_dir}", file=sys.stderr)
+        return
+    print(f"\nLaunching {entry.get('name')}...\n", flush=True)
+    proc = start_subprocess(str(app_dir), entry_script)
+    try:
+        for line in stream_process_output(proc):
+            print(line)
+    except KeyboardInterrupt:
+        print("\nStopping miniapp...", flush=True)
+        proc.terminate()
+    proc.wait()
+    print("Miniapp exited with code", proc.returncode)
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description="Qi miniapps cockpit")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("list", help="list available miniapps")
+    run_parser = subparsers.add_parser("run", help="run a miniapp by name")
+    run_parser.add_argument("name", help="name of the miniapp to run")
+
+    args = parser.parse_args(argv)
+
+    manifest_path = Path(__file__).resolve().parent.parent / "miniapps.json"
+    manifest = load_manifest(manifest_path)
+
+    if args.command == "list":
+        list_apps(manifest)
+        return 0
+    if args.command == "run":
+        entry = find_miniapp(manifest, args.name)
+        if entry is None:
+            print(f"Miniapp '{args.name}' not found.")
+            return 1
+        run_app(entry)
+        return 0
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
+
+================================================================================
+END OF FILE: D:\qilife-eos\cockpit\cockpit.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\cockpit\config.example.json
+TYPE: .json
+================================================================================
+
+{
+  "apps_dir": "../miniapps",
+  "manifest": "../miniapps.json",
+  "python_unix": "../.venv/bin/python",
+  "python_win": "..\\.venv\\Scripts\\python.exe"
+}
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\cockpit\config.example.json
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\cockpit\README.md
+TYPE: .md
+================================================================================
+
+# Cockpit
+
+Small CLI to list and run miniapps found in `../miniapps` or declared in `../miniapps.json`.
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\cockpit\README.md
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\cockpit\requirements.txt
+TYPE: .txt
+================================================================================
+
+click>=8.1.7
+psutil>=6.0.0
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\cockpit\requirements.txt
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\app.py
+TYPE: .py
+================================================================================
+
+import json, os, socket
+from pathlib import Path
+from flask import Flask, jsonify
+
+CFG = json.loads(Path("config.json").read_text())
+app = Flask(__name__)
+
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok", "app": CFG["name"]})
+
+@app.get("/")
+def index():
+    return jsonify({"hello": CFG["name"]})
+
+def _pick_port():
+    if CFG.get("port", 0):
+        return CFG["port"]
+    s = socket.socket()
+    s.bind(("", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+if __name__ == "__main__":
+    port = _pick_port()
+    print(f"{CFG['name']} starting on http://{CFG['host']}:{port}")
+    app.run(host=CFG["host"], port=port)
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\app.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\config.json
+TYPE: .json
+================================================================================
+
+{
+  "name": "qivect-dropbox",
+  "description": "Vector sync with Dropbox (demo stub).",
+  "host": "127.0.0.1",
+  "port": 0
+}
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\config.json
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\README.md
+TYPE: .md
+================================================================================
+
+# qivect-dropbox
+
+Vector sync with Dropbox (demo stub).
+
+## Run
+```bash
+# Unix
+./run.sh
+# Windows PowerShell
+./run.ps1
+```
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\README.md
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\requirements.txt
+TYPE: .txt
+================================================================================
+
+flask>=3.0.0
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\requirements.txt
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\run.ps1
+TYPE: .ps1
+================================================================================
+
+#Requires -Version 5.0
+if (Test-Path ".\.venv\Scripts\Activate.ps1") {
+  . .\.venv\Scripts\Activate.ps1
+}
+python .\app.py
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\run.ps1
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qivect-dropbox\run.sh
+TYPE: .sh
+================================================================================
+
+#!/usr/bin/env bash
+set -e
+if [ -d ".venv" ]; then
+  . .venv/bin/activate
+fi
+python app.py
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qivect-dropbox\run.sh
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\app.py
+TYPE: .py
+================================================================================
+
+import json, os, socket
+from pathlib import Path
+from flask import Flask, jsonify
+
+CFG = json.loads(Path("config.json").read_text())
+app = Flask(__name__)
+
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok", "app": CFG["name"]})
+
+@app.get("/")
+def index():
+    return jsonify({"hello": CFG["name"]})
+
+def _pick_port():
+    if CFG.get("port", 0):
+        return CFG["port"]
+    s = socket.socket()
+    s.bind(("", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+if __name__ == "__main__":
+    port = _pick_port()
+    print(f"{CFG['name']} starting on http://{CFG['host']}:{port}")
+    app.run(host=CFG["host"], port=port)
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\app.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\config.json
+TYPE: .json
+================================================================================
+
+{
+  "name": "qi_rag_private",
+  "description": "Private RAG stack (demo stub).",
+  "host": "127.0.0.1",
+  "port": 0
+}
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\config.json
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\docker-compose.yml
+TYPE: .yml
+================================================================================
+
+version: '3.9'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.7.3
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__HOST: 0.0.0.0
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "6333:6333"
+
+  api:
+    build:
+      context: .
+      dockerfile: q_tier_rag/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - qdrant
+    environment:
+      - DATA_ROOT=${DATA_ROOT:-/data}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-bge-small-en-v1.5}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - TIER_COLLECTIONS=${TIER_COLLECTIONS:-UNCLASS:q_unclass,CLASSIFIED:q_classified,ULTRA:q_ultra,MEO:q_meo}
+      - FOLDER_TIERS=${FOLDER_TIERS:-unclass:UNCLASS,classified:CLASSIFIED,ultra:ULTRA,meo:MEO}
+      - TIER_POLICIES=${TIER_POLICIES:-{"UNCLASS": true, "CLASSIFIED": true, "ULTRA": false, "MEO": false}}
+      - CLOUD_ENDPOINT=${CLOUD_ENDPOINT:-}
+      - CHUNK_SIZE=${CHUNK_SIZE:-800}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+      - TOP_K=${TOP_K:-5}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ${DATA_ROOT:-./data}:${DATA_ROOT:-/data}
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # Optional: Ollama service for local LLM inference.  Remove if using a remote LLM provider.
+  ollama:
+    image: ollama/ollama:0.1.16
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  qdrant_data:
+  ollama_data:
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\docker-compose.yml
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\README.md
+TYPE: .md
+================================================================================
+
+# Q Tiered RAG Stack (MVP)
+
+This repository provides a **minimal viable product (MVP)** for a Retrieval‑Augmented Generation (RAG) system with support for multiple classification tiers.  You can ingest your personal or business documents into a vector database and query them via a chatbot while respecting classification boundaries.  Each tier can choose whether to sync to a cloud fallback node or remain local only.
+
+The MVP is opinionated but deliberately simple: it runs locally with Docker, uses [Qdrant](https://qdrant.tech/) for embeddings storage and [FastAPI](https://fastapi.tiangolo.com/) to expose HTTP endpoints.  A folder watcher automatically ingests changed files.  You can extend it later to support user authentication, fancy UIs, or additional back‑ends.
+
+## Features
+
+- **Classification tiers** – Four built‑in tiers (`UNCLASS`, `CLASSIFIED`, `ULTRA`, `MEO`).  Files are routed to the appropriate Qdrant collection based on their folder name or front‑matter metadata.
+- **Per‑tier policies** – Each tier declares whether it can fall back to a cloud node if the local node is unavailable.  By default `UNCLASS` and `CLASSIFIED` allow cloud fallback, while `ULTRA` and `MEO` are local‑only.
+- **Local‑first retrieval** – Queries are answered from the local vector database first.  If the local node is unreachable for a given tier and fallback is allowed, the server proxies the request to a remote API defined in your `.env`.
+- **Folder watcher** – A simple watcher monitors your data directories and triggers ingestion whenever files are created or modified.  It supports markdown, text and PDF files out of the box.
+- **Environment driven configuration** – Configure collections, folder mapping, model names and cloud endpoint in a `.env` file.  An example file is provided.
+
+## Getting Started
+
+### 1. Install dependencies
+
+```bash
+git clone https://example.com/q_tier_rag.git
+cd q_tier_rag
+
+# create a virtualenv (optional)
+python -m venv .venv
+source .venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Alternatively you can use Docker; see the `docker-compose.yml` at the root of the project.
+
+### 2. Configure your environment
+
+Copy `.env.example` to `.env` and adjust the values.  Important keys:
+
+- `DATA_ROOT` – path to the directory containing per‑tier subfolders (e.g. `V:/data` on Windows or `/data` on Linux).  The watcher looks here.
+- `QDRANT_HOST` & `QDRANT_PORT` – connection parameters for your local Qdrant instance.
+- `TIER_COLLECTIONS` – mapping from tier name to Qdrant collection name.  Comma separated `tier:collection` entries.
+- `FOLDER_TIERS` – mapping from folder name to tier.  For example `unclass:UNCLASS,classified:CLASSIFIED`.
+- `CLOUD_ENDPOINT` – URL of your cloud fallback API; omit or leave empty if you do not have one.
+- `TIER_POLICIES` – per‑tier JSON describing whether each tier permits cloud fallback.
+
+### 3. Start Qdrant and the API server
+
+To launch everything via Docker run:
+
+```bash
+docker compose up -d
+
+# pull a model for Ollama if using local LLM (optional)
+docker compose exec ollama ollama pull llama3.1:8b
+```
+
+If you prefer to run locally without Docker you must start Qdrant and then run:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+### 4. Ingest your documents
+
+Place files into subfolders under `DATA_ROOT` matching your tiers (e.g. `data/unclass`, `data/ultra`).  You can override the tier for a particular file by adding a YAML front‑matter block to a markdown file:
+
+```md
+---
+title: Project Plan
+classification: CLASSIFIED
+---
+This note is classified.
+```
+
+Run the ingestion script to index existing files:
+
+```bash
+python scripts/ingest.py path/to/folder
+```
+
+Or start the watcher to automatically ingest new/updated files:
+
+```bash
+python scripts/watch_folder.py
+```
+
+### 5. Ask questions
+
+Send a POST request to the `/chat` endpoint with a `question` parameter.  Optionally include a comma‑separated list of tiers to search:
+
+```bash
+curl -X POST http://localhost:8000/chat -d "question=What is the project plan?&tiers=UNCLASS,CLASSIFIED"
+```
+
+The API will respond with an answer generated by the LLM along with context documents and their tiers.  If the local node cannot answer for some tiers and fallback is allowed, the server will call the configured `CLOUD_ENDPOINT`.
+
+## Folder Layout
+
+```
+q_tier_rag/
+├── app/
+│   ├── main.py          # FastAPI application exposing /ingest and /chat endpoints
+│   ├── rag.py           # Helper functions for embedding and retrieving text
+│   ├── llm.py           # Abstraction to call a local LLM via Ollama or remote API
+│   └── utils.py         # Classification and parsing utilities
+├── scripts/
+│   ├── ingest.py        # CLI script to ingest an entire directory
+│   └── watch_folder.py  # Folder watcher that triggers ingestion on file changes
+├── .env.example         # Example environment configuration
+├── docker-compose.yml   # Bring up Qdrant, Ollama and the API server
+├── requirements.txt     # Python dependencies
+└── README.md            # This file
+```
+
+## Extending
+
+- **Cloud fallback** – The current implementation supports proxying to a single remote API.  Add authentication or load balancing as needed.
+- **Authentication** – Protect your endpoints using API keys, OAuth, Supabase Auth or another identity provider.  Modify `app/main.py` to enforce authentication and issue per‑tier claims.
+- **Additional tiers** – Add more tiers by updating `TIER_COLLECTIONS`, `FOLDER_TIERS` and `TIER_POLICIES` in your `.env`.
+- **Embedding models** – Change the `EMBEDDING_MODEL` environment variable to point at a different SentenceTransformer (e.g. `all-MiniLM-L6-v2`).
+- **Chunking** – Adjust `CHUNK_SIZE` and `CHUNK_OVERLAP` in `.env` to tune how text is split prior to embedding.
+
+## License
+
+This MVP is provided as-is under the MIT license.  Use at your own risk and feel free to adapt it for personal or commercial use.
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\README.md
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\requirements.txt
+TYPE: .txt
+================================================================================
+
+# Core framework
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+
+# Vector storage
+qdrant-client==1.9.1
+
+# Embedding
+sentence-transformers==2.2.2
+
+# File watching
+watchdog==4.0.0
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.31.0
+PyYAML==6.0.1
+
+# PDF support (optional)
+pdfminer.six==20221105
+
+# Optional: if using Ollama for local LLM
+# pip install ollama
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\requirements.txt
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\run.ps1
+TYPE: .ps1
+================================================================================
+
+#Requires -Version 5.0
+if (Test-Path ".\.venv\Scripts\Activate.ps1") {
+  . .\.venv\Scripts\Activate.ps1
+}
+python .\app.py
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\run.ps1
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\run.sh
+TYPE: .sh
+================================================================================
+
+#!/usr/bin/env bash
+set -e
+if [ -d ".venv" ]; then
+  . .venv/bin/activate
+fi
+python app.py
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\run.sh
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\app\llm.py
+TYPE: .py
+================================================================================
+
+"""LLM abstraction layer.
+
+This module encapsulates calls to a local language model (via Ollama) or to a
+remote provider.  It exposes a simple `generate_answer` function which
+constructs a prompt from the user question and retrieved context.
+"""
+
+from __future__ import annotations
+
+import os
+import requests
+from typing import List
+
+
+def build_prompt(question: str, contexts: List[str]) -> str:
+    """Compose a prompt for the language model.
+
+    The prompt concatenates the retrieved contexts and asks the model to
+    answer the question based solely on these documents.  If you change
+    this function please update your retrieval logic accordingly.
+    """
+    context_str = "\n\n".join(contexts)
+    prompt = (
+        "You are an assistant with access to the following context documents:\n\n"
+        f"{context_str}\n\n"
+        "Answer the question using only the provided documents. "
+        "Cite the document index when relevant (e.g. [1], [2]).\n\n"
+        f"Question: {question}\nAnswer:"
+    )
+    return prompt
+
+
+def call_ollama(prompt: str, model: str) -> str:
+    """Send a prompt to a local Ollama server and return the generated text.
+
+    Requires the `ollama/ollama` Docker container to be running with port
+    11434 exposed.  See the project README for details.
+    """
+    url = "http://localhost:11434/api/generate"
+    payload = {"model": model, "prompt": prompt, "stream": False}
+    try:
+        resp = requests.post(url, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("response", "").strip()
+    except Exception as exc:
+        raise RuntimeError(f"Failed to call Ollama: {exc}")
+
+
+def generate_answer(question: str, contexts: List[str]) -> str:
+    """Generate an answer to a question given a list of context passages.
+
+    Depending on your environment variables this function will either call a
+    local Ollama server or another provider.  For the MVP we support only
+    the local Ollama pathway.
+    """
+    prompt = build_prompt(question, contexts)
+    model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+    # In a more complete implementation you could branch here based on
+    # LLM_PROVIDER environment variables or similar.
+    return call_ollama(prompt, model)
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\app\llm.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\app\main.py
+TYPE: .py
+================================================================================
+
+"""FastAPI application for the tiered RAG backend."""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import List, Optional
+
+import requests
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+
+from .llm import generate_answer
+from .rag import RagEngine
+from .utils import load_tier_policies
+
+# Instantiate the engine once at startup
+engine = RagEngine()
+app = FastAPI(title="Tiered RAG API", version="0.1.0")
+
+# Load tier policies and cloud endpoint from environment
+tier_policies = load_tier_policies()
+cloud_endpoint = os.getenv("CLOUD_ENDPOINT", "").strip() or None
+
+
+class IngestRequest(BaseModel):
+    path: str
+
+
+@app.post("/ingest")
+def ingest(req: IngestRequest) -> dict:
+    """Ingest a single file specified by its path relative to DATA_ROOT."""
+    # Resolve path relative to data root
+    full_path = Path(engine.data_root) / req.path
+    if not full_path.exists() or not full_path.is_file():
+        raise HTTPException(status_code=404, detail=f"File not found: {full_path}")
+    try:
+        engine.upsert_document(full_path)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"status": "ok", "path": str(full_path)}
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: List[dict]
+    fallback_used: bool
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(question: str = Query(...), tiers: Optional[str] = Query(None)) -> ChatResponse:
+    """Answer a question using content from the specified classification tiers."""
+    # Determine which tiers to search
+    if tiers:
+        requested_tiers = [t.strip().upper() for t in tiers.split(",") if t.strip()]
+    else:
+        # Default to UNCLASS and CLASSIFIED
+        requested_tiers = ["UNCLASS", "CLASSIFIED"]
+
+    # Query local collections
+    results = engine.query(question, requested_tiers)
+    # Determine which tiers returned nothing and allow fallback
+    missing_tiers = set(requested_tiers) - {res[2].get("tier") for res in results}
+    fallback_used = False
+    remote_answer: Optional[str] = None
+
+    if missing_tiers and cloud_endpoint:
+        # Check policy: we only fall back for tiers whose policy is true
+        allowed_tiers = [t for t in missing_tiers if tier_policies.get(t, False)]
+        if allowed_tiers:
+            # Proxy the query to the remote endpoint
+            try:
+                resp = requests.post(
+                    cloud_endpoint.rstrip("/") + "/chat",
+                    params={"question": question, "tiers": ",".join(allowed_tiers)},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                remote_answer = data.get("answer") or None
+                fallback_used = True
+            except Exception:
+                remote_answer = None
+
+    # Compose context texts for the local answer
+    contexts = [res[0] for res in results]
+    if contexts:
+        answer = generate_answer(question, contexts)
+    elif remote_answer:
+        answer = remote_answer
+    else:
+        answer = "No relevant information available."
+
+    # Prepare sources list
+    sources = [
+        {
+            "text": res[0],
+            "score": res[1],
+            "tier": res[2].get("tier"),
+            "path": res[2].get("path"),
+        }
+        for res in results
+    ]
+
+    return ChatResponse(answer=answer, sources=sources, fallback_used=fallback_used)
+
+
+@app.get("/")
+def root() -> dict:
+    return {"message": "Tiered RAG API is running."}
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\app\main.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\app\rag.py
+TYPE: .py
+================================================================================
+
+"""Core retrieval and ingestion logic.
+
+This module provides helper functions to create a Qdrant client, split
+documents into chunks, generate embeddings and perform similarity search.
+"""
+
+from __future__ import annotations
+
+import os
+import uuid
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Tuple
+
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as qmodels
+from sentence_transformers import SentenceTransformer
+
+from .utils import (
+    determine_tier_for_file,
+    load_env_mapping,
+    parse_front_matter,
+    read_pdf,
+    read_text_file,
+)
+
+
+class RagEngine:
+    """Encapsulates embedding, storage and retrieval operations."""
+
+    def __init__(self) -> None:
+        # Load environment variables
+        self.data_root = Path(os.getenv("DATA_ROOT", "."))
+        self.qdrant_host = os.getenv("QDRANT_HOST", "localhost")
+        self.qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
+        self.embedding_model_name = os.getenv("EMBEDDING_MODEL", "bge-small-en-v1.5")
+        self.chunk_size = int(os.getenv("CHUNK_SIZE", "800"))
+        self.chunk_overlap = int(os.getenv("CHUNK_OVERLAP", "100"))
+        self.top_k = int(os.getenv("TOP_K", "5"))
+
+        # Load mapping from env
+        self.tier_collections = load_env_mapping("TIER_COLLECTIONS")
+        self.folder_tiers = load_env_mapping("FOLDER_TIERS")
+
+        # Initialise components
+        self._client = QdrantClient(host=self.qdrant_host, port=self.qdrant_port)
+        self._embedder: Optional[SentenceTransformer] = None
+
+    def embedder(self) -> SentenceTransformer:
+        """Lazy load the embedding model."""
+        if self._embedder is None:
+            self._embedder = SentenceTransformer(self.embedding_model_name)
+        return self._embedder
+
+    # Document handling
+    def load_document(self, path: Path) -> Tuple[str, Dict[str, str]]:
+        """Load the contents of a document and return (text, metadata)."""
+        if path.suffix.lower() == ".pdf":
+            text = read_pdf(path)
+        else:
+            text = read_text_file(path)
+        # Extract front‑matter if present
+        meta, body = parse_front_matter(text) if path.suffix.lower() in {".md", ".markdown"} else ({}, text)
+        return body, meta or {}
+
+    def split_text(self, text: str) -> List[str]:
+        """Split a document into overlapping chunks.
+
+        We perform a naive word‑based segmentation using whitespace to approximate
+        tokens.  Each chunk contains at most `chunk_size` words with
+        `chunk_overlap` words overlap with the previous chunk.  You may
+        substitute a more sophisticated tokeniser here.
+        """
+        words = text.split()
+        if not words:
+            return []
+        chunks: List[str] = []
+        step = self.chunk_size - self.chunk_overlap
+        for i in range(0, len(words), step):
+            chunk_words = words[i : i + self.chunk_size]
+            chunk = " ".join(chunk_words)
+            chunks.append(chunk)
+            if i + self.chunk_size >= len(words):
+                break
+        return chunks
+
+    def ensure_collection(self, collection_name: str, vector_size: int) -> None:
+        """Create a collection if it does not already exist."""
+        try:
+            self._client.get_collection(collection_name)
+        except Exception:
+            # Use default configuration: HNSW + cosine distance
+            self._client.create_collection(
+                collection_name=collection_name,
+                vectors_config=qmodels.VectorParams(size=vector_size, distance=qmodels.Distance.COSINE),
+            )
+
+    def upsert_document(self, path: Path) -> None:
+        """Ingest a single file into the appropriate tier collection."""
+        body, meta = self.load_document(path)
+        tier = determine_tier_for_file(path, self.folder_tiers)
+        collection = self.tier_collections.get(tier, f"q_{tier.lower()}")
+
+        # Split into chunks and embed
+        chunks = self.split_text(body)
+        if not chunks:
+            return
+        embeddings = self.embedder().encode(chunks).tolist()
+        # Ensure collection exists
+        self.ensure_collection(collection, len(embeddings[0]))
+        points: List[qmodels.PointStruct] = []
+        for idx, vector in enumerate(embeddings):
+            payload = {
+                "path": str(path),
+                "tier": tier,
+                "metadata": meta,
+                "chunk_index": idx,
+            }
+            points.append(
+                qmodels.PointStruct(
+                    id=str(uuid.uuid4()),
+                    vector=vector,
+                    payload=payload,
+                )
+            )
+        # Upsert points
+        self._client.upsert(collection_name=collection, points=points)
+
+    def query(self, question: str, tiers: List[str]) -> List[Tuple[str, float, Dict[str, str]]]:
+        """Search for relevant chunks across multiple tiers.
+
+        Returns a list of tuples `(text, score, payload)`.  The text is the chunk
+        content, score is the similarity score (the higher the better), and
+        payload contains metadata such as the original file path and tier.
+        """
+        # Embed the question
+        q_emb = self.embedder().encode([question]).tolist()[0]
+        results: List[Tuple[str, float, Dict[str, str]]] = []
+        for tier in tiers:
+            collection = self.tier_collections.get(tier, f"q_{tier.lower()}")
+            try:
+                search_res = self._client.search(collection, q_emb, limit=self.top_k)
+            except Exception:
+                continue
+            for res in search_res:
+                payload = res.payload or {}
+                # We need to fetch the actual chunk text.  Qdrant stores only the
+                # embedding and payload; to reconstruct the text we must read
+                # the document and split again.  For MVP we include the chunk
+                # index in the payload and re‑compute the split.
+                path = Path(payload.get("path", ""))
+                idx = payload.get("chunk_index", 0)
+                try:
+                    text, _ = self.load_document(path)
+                    chunk = self.split_text(text)[idx]
+                except Exception:
+                    chunk = ""
+                results.append((chunk, res.score, payload))
+        # Sort results by descending score
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\app\rag.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\app\utils.py
+TYPE: .py
+================================================================================
+
+"""Utility functions for file parsing and classification.
+
+This module centralises small helpers used by the ingestion and retrieval pipeline.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+from pathlib import Path
+from typing import Dict, Optional, Tuple
+
+import yaml
+
+
+def parse_front_matter(text: str) -> Tuple[Dict[str, str], str]:
+    """Extract YAML front‑matter from a markdown document.
+
+    Returns a tuple of (metadata, remainder) where metadata is a dict parsed
+    from the front‑matter and remainder is the document content without the
+    front‑matter block.  If no front‑matter is found the metadata will be
+    empty and the original text returned.
+    """
+    if text.startswith("---\n"):
+        end = text.find("\n---", 4)
+        if end != -1:
+            fm = text[4:end]
+            try:
+                data = yaml.safe_load(fm) or {}
+            except Exception:
+                data = {}
+            remainder = text[end + 4 :]
+            return data, remainder
+    return {}, text
+
+
+def read_text_file(path: Path) -> str:
+    """Read a text or markdown file and return its contents as a string."""
+    return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def read_pdf(path: Path) -> str:
+    """Extract text from a PDF file using pdfminer.six.
+
+    If pdfminer is not installed this function will raise ImportError.
+    """
+    from pdfminer.high_level import extract_text  # type: ignore
+
+    return extract_text(str(path))
+
+
+def load_env_mapping(var: str) -> Dict[str, str]:
+    """Parse a comma‑separated mapping from an environment variable.
+
+    Example: "unclass:UNCLASS,classified:CLASSIFIED" -> {"unclass": "UNCLASS", ...}
+    """
+    mapping_str = os.getenv(var) or ""
+    result: Dict[str, str] = {}
+    for entry in mapping_str.split(","):
+        if not entry:
+            continue
+        parts = entry.split(":", 1)
+        if len(parts) == 2:
+            key, value = parts[0].strip(), parts[1].strip()
+            result[key] = value
+    return result
+
+
+def determine_tier_from_path(path: Path, folder_tiers: Dict[str, str]) -> Optional[str]:
+    """Determine the classification tier for a file based on its parent folder.
+
+    Looks at each part of the path relative to the data root.  Returns the tier
+    name if found in the folder_tiers mapping, else None.
+    """
+    for part in path.parts:
+        if part in folder_tiers:
+            return folder_tiers[part]
+    return None
+
+
+def determine_tier_for_file(path: Path, folder_tiers: Dict[str, str]) -> str:
+    """Determine the classification tier for a file.
+
+    The tier is determined in the following order:
+      1. YAML front‑matter field `classification` in a markdown file.
+      2. Folder name mapping (e.g. `data/unclass`).
+      3. Defaults to UNCLASS.
+    """
+    tier = None
+    # Only attempt front‑matter parsing for markdown files
+    if path.suffix.lower() in {".md", ".markdown"}:
+        try:
+            meta, _ = parse_front_matter(read_text_file(path))
+            if isinstance(meta, dict) and meta.get("classification"):
+                tier = str(meta["classification"]).strip().upper()
+        except Exception:
+            tier = None
+
+    if not tier:
+        tier = determine_tier_from_path(path, folder_tiers)
+
+    return tier or "UNCLASS"
+
+
+def load_tier_policies() -> Dict[str, bool]:
+    """Load per‑tier fallback policy from the TIER_POLICIES environment variable."""
+    raw = os.getenv("TIER_POLICIES", "{}")
+    try:
+        policies = json.loads(raw)
+        return {str(k): bool(v) for k, v in policies.items()}
+    except Exception:
+        return {}
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\app\utils.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\ingest.py
+TYPE: .py
+================================================================================
+
+#!/usr/bin/env python
+"""CLI tool to ingest documents from a folder.
+
+Usage:
+    python scripts/ingest.py /path/to/file_or_folder
+
+The script walks through the provided path.  If a file is given it is ingested
+directly; if a directory is given all files within are ingested recursively.
+
+The ingestion honours classification tiers defined in your environment.
+"""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from app.rag import RagEngine
+
+
+def ingest_path(engine: RagEngine, path: Path) -> None:
+    if path.is_dir():
+        for item in path.rglob("*"):
+            if item.is_file():
+                print(f"Ingesting {item}")
+                engine.upsert_document(item)
+    elif path.is_file():
+        print(f"Ingesting {path}")
+        engine.upsert_document(path)
+    else:
+        print(f"Skipping unknown path: {path}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Ingest documents into Qdrant.")
+    parser.add_argument("paths", nargs="+", type=Path, help="Files or directories to ingest")
+    args = parser.parse_args()
+
+    engine = RagEngine()
+    for path in args.paths:
+        ingest_path(engine, path)
+
+
+if __name__ == "__main__":
+    main()
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\ingest.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\rclone_template.sh
+TYPE: .sh
+================================================================================
+
+#!/usr/bin/env bash
+# Example rclone sync script for the tiered RAG stack.
+#
+# This script demonstrates how you could synchronise UNCLASS and CLASSIFIED
+# documents and snapshots to an encrypted remote (e.g. Google Drive).  It
+# assumes you have configured encrypted remotes named `unclass_crypt` and
+# `classified_crypt` via `rclone config`.  See the README for details.
+
+set -euo pipefail
+
+# Location of your data and snapshot folders.  Adjust to match your DATA_ROOT
+DATA_ROOT="${DATA_ROOT:-./data}"
+SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-./snapshots}"
+
+echo "Syncing UNCLASS documents…"
+rclone sync "$DATA_ROOT/unclass" unclass_crypt:data
+echo "Syncing UNCLASS snapshots…"
+rclone sync "$SNAPSHOT_ROOT/q_unclass" unclass_crypt:snapshots
+
+echo "Syncing CLASSIFIED documents…"
+rclone sync "$DATA_ROOT/classified" classified_crypt:data
+echo "Syncing CLASSIFIED snapshots…"
+rclone sync "$SNAPSHOT_ROOT/q_classified" classified_crypt:snapshots
+
+echo "Sync complete.  ULTRA and MEO tiers are intentionally excluded."
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\rclone_template.sh
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\watch_folder.py
+TYPE: .py
+================================================================================
+
+#!/usr/bin/env python
+"""Watch a directory tree and ingest documents on changes.
+
+This script uses watchdog to monitor the directory specified by the `DATA_ROOT`
+environment variable.  When a file is created or modified it will be
+ingested into the appropriate Qdrant collection.
+
+Run this script in a long‑running process alongside your API server.
+"""
+
+from __future__ import annotations
+
+import os
+import threading
+import time
+from pathlib import Path
+from typing import Optional
+
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
+from app.rag import RagEngine
+
+
+class IngestionHandler(FileSystemEventHandler):
+    def __init__(self, engine: RagEngine, data_root: Path) -> None:
+        super().__init__()
+        self.engine = engine
+        self.data_root = data_root
+
+    def on_created(self, event):
+        if not event.is_directory:
+            self.handle(Path(event.src_path))
+
+    def on_modified(self, event):
+        if not event.is_directory:
+            self.handle(Path(event.src_path))
+
+    def handle(self, path: Path) -> None:
+        # Only process files under data_root
+        try:
+            path.relative_to(self.data_root)
+        except ValueError:
+            return
+        try:
+            print(f"[watcher] ingesting {path}")
+            self.engine.upsert_document(path)
+        except Exception as exc:
+            print(f"[watcher] failed to ingest {path}: {exc}")
+
+
+def main() -> None:
+    data_root = Path(os.getenv("DATA_ROOT", ".")).resolve()
+    print(f"Watching {data_root}")
+    engine = RagEngine()
+    event_handler = IngestionHandler(engine, data_root)
+    observer = Observer()
+    observer.schedule(event_handler, str(data_root), recursive=True)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+
+if __name__ == "__main__":
+    main()
+
+================================================================================
+END OF FILE: D:\qilife-eos\miniapps\qi_rag_private\scripts\watch_folder.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\scripts\bootstrap_venvs.ps1
+TYPE: .ps1
+================================================================================
+
+<#!
+# Create Python virtual environments for the cockpit and each miniapp.
+#
+# This script assumes you have Python installed and available in the PATH. It
+# iterates over the cockpit and each miniapp directory and creates a `.venv`
+# folder if one does not exist. It then installs any dependencies from
+# `requirements.txt`.
+#>  
+
+$RootDir = (Get-Item -Path $PSScriptRoot).Parent.FullName
+
+function Create-Venv {
+    param([string]$Dir)
+    Write-Host "Creating venv in $Dir/.venv"
+    python -m venv "$Dir/.venv"
+    & "$Dir/.venv/Scripts/activate.ps1"
+    if (Test-Path "$Dir/requirements.txt") {
+        pip install --upgrade pip | Out-Null
+        pip install -r "$Dir/requirements.txt" | Out-Null
+    }
+    & "$Env:PSHOME\..\Scripts\deactivate"
+}
+
+# Cockpit
+Create-Venv "$RootDir\cockpit"
+
+# Miniapps
+Get-ChildItem -Path "$RootDir\miniapps" -Directory | ForEach-Object {
+    Create-Venv $_.FullName
+}
+
+Write-Host "Virtual environments created."
+
+================================================================================
+END OF FILE: D:\qilife-eos\scripts\bootstrap_venvs.ps1
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\scripts\bootstrap_venvs.sh
+TYPE: .sh
+================================================================================
+
+#!/usr/bin/env bash
+# Create Python virtual environments for the cockpit and each miniapp.
+#
+# This script iterates over the cockpit and each miniapp directory and
+# initializes a virtual environment in a `.venv` subfolder if one does
+# not already exist. It then installs the dependencies listed in
+# `requirements.txt` (if present) into the environment.
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+create_venv() {
+  local dir=$1
+  echo "Creating venv in $dir/.venv"
+  python -m venv "$dir/.venv"
+  source "$dir/.venv/bin/activate"
+  if [[ -f "$dir/requirements.txt" ]]; then
+    pip install --upgrade pip >/dev/null
+    pip install -r "$dir/requirements.txt"
+  fi
+  deactivate
+}
+
+# Create venv for cockpit
+create_venv "$ROOT_DIR/cockpit"
+
+# Create venvs for each miniapp
+for app_dir in "$ROOT_DIR"/miniapps/*; do
+  if [[ -d "$app_dir" ]]; then
+    create_venv "$app_dir"
+  fi
+done
+
+echo "Virtual environments created."
+
+================================================================================
+END OF FILE: D:\qilife-eos\scripts\bootstrap_venvs.sh
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\shared\__init__.py
+TYPE: .py
+================================================================================
+
+"""Shared utilities for the Qi miniapps ecosystem.
+
+This package exposes helpers that can be reused by both the cockpit and
+individual miniapps. To keep the surface area small, only import what you
+need from the submodules (for example, ``from shared.process_utils import start_subprocess``).
+"""
+
+from .process_utils import start_subprocess, stream_process_output
+
+__all__ = [
+    "start_subprocess",
+    "stream_process_output",
+]
+
+================================================================================
+END OF FILE: D:\qilife-eos\shared\__init__.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\shared\config_schema.py
+TYPE: .py
+================================================================================
+
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class MiniAppConfig:
+    name: str
+    description: Optional[str] = None
+    host: str = "127.0.0.1"
+    port: int = 0  # 0 => auto-pick
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\shared\config_schema.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\shared\logging_utils.py
+TYPE: .py
+================================================================================
+
+import logging
+
+def setup_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        logger.setLevel(logging.INFO)
+        ch = logging.StreamHandler()
+        fmt = logging.Formatter('%(asctime)s | %(levelname)s | %(name)s | %(message)s')
+        ch.setFormatter(fmt)
+        logger.addHandler(ch)
+    return logger
+
+
+================================================================================
+END OF FILE: D:\qilife-eos\shared\logging_utils.py
+================================================================================
+
+
+================================================================================
+FILE: D:\qilife-eos\shared\process_utils.py
+TYPE: .py
+================================================================================
+
+"""Helpers for spawning and streaming subprocesses.
+
+These functions are used by the cockpit to launch miniapps as separate
+processes and forward their output back to the user. They can also be
+imported by miniapps themselves if they need to run other commands.
+
+All subprocesses are created with ``text=True`` and unbuffered
+standard output to ensure that log messages appear immediately.
+"""
+from __future__ import annotations
+
+import os
+import subprocess
+import threading
+import queue
+from typing import Iterator, Iterable, Tuple, Optional
+
+
+def start_subprocess(cwd: str, entry: str, python_executable: Optional[str] = None) -> subprocess.Popen:
+    """Launch a Python subprocess for the given entry point in a working directory.
+
+    Parameters
+    ----------
+    cwd: str
+        The working directory where the entry script resides.
+    entry: str
+        Path to the Python script relative to ``cwd`` that should be executed.
+    python_executable: Optional[str]
+        Absolute path to the Python interpreter to use. If ``None`` the
+        interpreter from the current process (``sys.executable``) is used.
+
+    Returns
+    -------
+    subprocess.Popen
+        A handle to the started process. The caller is responsible for
+        terminating it when appropriate.
+    """
+    import sys
+    exe = python_executable or sys.executable
+    cmd = [exe, entry]
+    return subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        universal_newlines=True,
+    )
+
+
+def stream_process_output(proc: subprocess.Popen) -> Iterator[str]:
+    """Yield lines of output from a running subprocess.
+
+    The generator will block until the process terminates. To stop
+    streaming early call ``proc.terminate()`` from another thread.
+
+    Parameters
+    ----------
+    proc: subprocess.Popen
+        The process whose output should be consumed.
+
+    Yields
+    ------
+    str
+        Lines of text output by the process.
+    """
+    if proc.stdout is None:
+        return
+    # Iterate over lines as they become available.
+    for line in proc.stdout:
+        yield line.rstrip("\n")
+
+================================================================================
+END OF FILE: D:\qilife-eos\shared\process_utils.py
+================================================================================
+
+
+================================================================================
+EXTRACTION COMPLETE
+Total files processed: 35
+Output saved to: D:\qilife-eos\code_extraction_2025-08-26_01-47-40.txt
+================================================================================
